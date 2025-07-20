@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Ohm-ni | Visual Inspector</title>
+    <title>CircuitSeer | Visual Inspector</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -31,7 +31,7 @@
 
     <div class="w-full max-w-3xl mx-auto bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
         <div class="p-6 border-b border-gray-700">
-            <h1 class="text-3xl font-bold text-center text-gray-100">Project Ohm-ni</h1>
+            <h1 class="text-3xl font-bold text-center text-gray-100">CircuitSeer</h1>
             <p class="text-center text-gray-400 mt-1">AI Visual Inspection Agent</p>
         </div>
 
@@ -40,17 +40,23 @@
             <div class="bg-black rounded-lg overflow-hidden shadow-lg">
                 <video id="video-feed" autoplay playsinline class="w-full h-auto"></video>
             </div>
-            <div class="mt-6 text-center">
-                <button id="capture-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105">
+            <div class="mt-6 text-center flex flex-col sm:flex-row justify-center items-center gap-4">
+                <button id="capture-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 w-full sm:w-auto">
                     Capture Image
                 </button>
+                <span class="text-gray-400">or</span>
+                <label for="upload-input" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 cursor-pointer w-full sm:w-auto">
+                    Upload Image
+                </label>
+                <input type="file" id="upload-input" class="hidden" accept="image/png, image/jpeg">
             </div>
         </div>
 
         <!-- STATE 2: Confirmation View -->
         <div id="confirmation-view" class="p-6 hidden">
             <div class="bg-black rounded-lg overflow-hidden shadow-lg">
-                <canvas id="captured-canvas" class="w-full h-auto"></canvas>
+                <!-- Use an img tag here to handle both canvas and uploaded images easily -->
+                <img id="confirmation-image" src="" alt="Captured or uploaded component" class="w-full h-auto rounded-lg">
             </div>
             <div class="mt-6 flex justify-center space-x-4">
                 <button id="back-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105">
@@ -66,19 +72,17 @@
         <div id="analysis-view" class="p-6 hidden">
             <div class="grid md:grid-cols-2 gap-6">
                 <div>
-                    <h2 class="text-xl font-semibold mb-3 text-gray-300">Captured Image</h2>
+                    <h2 class="text-xl font-semibold mb-3 text-gray-300">Your Image</h2>
                     <div class="bg-black rounded-lg overflow-hidden shadow-lg">
-                        <img id="analysis-image" src="" alt="Captured component" class="w-full h-auto">
+                        <img id="analysis-image" src="" alt="Analyzed component" class="w-full h-auto">
                     </div>
                 </div>
                 <div>
-                    <h2 class="text-xl font-semibold mb-3 text-gray-300">Analysis Result</h2>
+                    <h2 class="text-xl font-semibold mb-3 text-gray-300">AI Analysis</h2>
                     <div id="analysis-result-container" class="bg-gray-900 p-4 rounded-lg h-96 overflow-y-auto border border-gray-700">
-                        <!-- Loader will be shown here -->
                         <div id="loader" class="flex justify-center items-center h-full">
                             <div class="loader"></div>
                         </div>
-                        <!-- Result will be populated here -->
                         <pre id="analysis-result" class="text-gray-200 whitespace-pre-wrap text-sm"></pre>
                     </div>
                 </div>
@@ -90,15 +94,18 @@
             </div>
         </div>
     </div>
+    <canvas id="captured-canvas" class="hidden"></canvas> <!-- Hidden canvas for processing -->
 
     <script>
         // UI Elements
         const videoFeed = document.getElementById('video-feed');
         const captureBtn = document.getElementById('capture-btn');
+        const uploadInput = document.getElementById('upload-input');
         const backBtn = document.getElementById('back-btn');
         const analyzeBtn = document.getElementById('analyze-btn');
         const startOverBtn = document.getElementById('start-over-btn');
         const capturedCanvas = document.getElementById('captured-canvas');
+        const confirmationImage = document.getElementById('confirmation-image');
         const analysisImage = document.getElementById('analysis-image');
         const analysisResult = document.getElementById('analysis-result');
         
@@ -109,9 +116,8 @@
         const loader = document.getElementById('loader');
 
         let stream;
-        let capturedImageDataURL;
+        let imageDataURL;
 
-        // --- State Management ---
         function showView(viewName) {
             liveFeedView.classList.add('hidden');
             confirmationView.classList.add('hidden');
@@ -119,59 +125,59 @@
             document.getElementById(viewName).classList.remove('hidden');
         }
 
-        // --- Camera Logic ---
         async function startCamera() {
             try {
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
+                if (stream) stream.getTracks().forEach(track => track.stop());
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 videoFeed.srcObject = stream;
                 showView('live-feed-view');
             } catch (err) {
                 console.error("Error accessing camera: ", err);
-                alert("Could not access the camera. Please ensure you have given permission and are not using it elsewhere.");
+                alert("Could not access the camera. Please ensure you have given permission.");
             }
         }
 
-        // --- Event Listeners ---
+        function showConfirmation(dataUrl) {
+            imageDataURL = dataUrl;
+            confirmationImage.src = imageDataURL;
+            showView('confirmation-view');
+        }
+
         captureBtn.addEventListener('click', () => {
             const context = capturedCanvas.getContext('2d');
             capturedCanvas.width = videoFeed.videoWidth;
             capturedCanvas.height = videoFeed.videoHeight;
             context.drawImage(videoFeed, 0, 0, videoFeed.videoWidth, videoFeed.videoHeight);
-            
-            capturedImageDataURL = capturedCanvas.toDataURL('image/jpeg');
-            showView('confirmation-view');
+            showConfirmation(capturedCanvas.toDataURL('image/jpeg'));
         });
 
-        backBtn.addEventListener('click', () => {
-            showView('live-feed-view');
+        uploadInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => showConfirmation(e.target.result);
+                reader.readAsDataURL(file);
+            }
         });
+
+        backBtn.addEventListener('click', startCamera);
 
         analyzeBtn.addEventListener('click', async () => {
             showView('analysis-view');
-            analysisImage.src = capturedImageDataURL;
+            analysisImage.src = imageDataURL;
             analysisResult.textContent = '';
             loader.classList.remove('hidden');
 
             try {
-                // This is where we send the image to the Python backend
                 const response = await fetch('http://127.0.0.1:5000/analyze', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    // We send the image as a Base64 encoded string
-                    body: JSON.stringify({ image: capturedImageDataURL.split(',')[1] }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageDataURL.split(',')[1] }),
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
+                const data = await response.json();
                 loader.classList.add('hidden');
                 analysisResult.textContent = data.analysis;
 
@@ -182,9 +188,7 @@
             }
         });
 
-        startOverBtn.addEventListener('click', () => {
-            startCamera();
-        });
+        startOverBtn.addEventListener('click', startCamera);
 
         // Initialize the app
         startCamera();

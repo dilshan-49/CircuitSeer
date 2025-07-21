@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 # LangChain and Google Gemini Imports
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 # --- 1. Configuration and API Key Setup ---
 load_dotenv()
@@ -101,3 +101,36 @@ def analyze_generic_component(image_path):
     base64_image = _image_to_base64(image_path)
     prompt = "Describe this electronic component, noting if it appears to be THT or SMD. Identify any markings, part numbers, or symbols on it and explain what they likely mean. For diodes, identify the cathode band. For transistors, identify any part numbers."
     return _invoke_vision_model(prompt, base64_image)
+
+
+
+# --- 4. Extended chat on component ---
+
+def continue_chat(chat_history: list):
+    """
+    TOOL 6: Takes the existing chat history and generates the next AI response.
+    """
+    # The first message from the AI is the initial, detailed analysis.
+    # We use this as the context for all future questions.
+    initial_analysis = chat_history[0][1]
+    
+    # We construct a message list for the LLM
+    messages = [
+        SystemMessage(content=f"You are an expert electronics assistant. You have already performed an analysis of a component with the following result: '{initial_analysis}'. Now, answer the user's follow-up questions based on this analysis and your general knowledge. Keep your answers concise and helpful."),
+    ]
+    
+    # Add the rest of the history, converting our simple tuple format to LangChain messages
+    for role, content in chat_history[1:]:
+        if role == "human":
+            messages.append(HumanMessage(content=content))
+        elif role == "ai":
+            messages.append(AIMessage(content=content))
+
+    # Invoke the model with the full conversation history
+    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
+    try:
+        response = llm.invoke(messages)
+        return response.content
+    except Exception as e:
+        print(f"An error occurred during chat: {e}")
+        return "Sorry, I encountered an error while processing your request."

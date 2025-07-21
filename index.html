@@ -25,12 +25,34 @@
 
         <!-- STATE 1: Live Camera Feed -->
         <div id="live-feed-view" class="p-6">
-             <!-- ... (no changes here) ... -->
+            <div class="bg-black rounded-lg overflow-hidden shadow-lg">
+                <video id="video-feed" autoplay playsinline class="w-full h-auto"></video>
+            </div>
+            <div class="mt-6 text-center flex flex-col sm:flex-row justify-center items-center gap-4">
+                <button id="capture-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 w-full sm:w-auto">
+                    Capture Image
+                </button>
+                <span class="text-gray-400">or</span>
+                <label for="upload-input" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 cursor-pointer w-full sm:w-auto">
+                    Upload Image
+                </label>
+                <input type="file" id="upload-input" class="hidden" accept="image/png, image/jpeg">
+            </div>
         </div>
 
         <!-- STATE 2: Confirmation View -->
         <div id="confirmation-view" class="p-6 hidden">
-            <!-- ... (no changes here) ... -->
+            <div class="bg-black rounded-lg overflow-hidden shadow-lg">
+                <img id="confirmation-image" src="" alt="Captured or uploaded component" class="w-full h-auto rounded-lg">
+            </div>
+            <div class="mt-6 flex justify-center space-x-4">
+                <button id="back-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105">
+                    Back
+                </button>
+                <button id="analyze-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105">
+                    Analyze Image
+                </button>
+            </div>
         </div>
 
         <!-- STATE 3: Chat & Analysis View -->
@@ -62,15 +84,54 @@
     <canvas id="captured-canvas" class="hidden"></canvas>
 
     <script>
-        // --- [Previous variable declarations remain the same] ---
+        // UI Elements
+        const videoFeed = document.getElementById('video-feed');
+        const captureBtn = document.getElementById('capture-btn');
+        const uploadInput = document.getElementById('upload-input');
+        const backBtn = document.getElementById('back-btn');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const startOverBtn = document.getElementById('start-over-btn');
+        const capturedCanvas = document.getElementById('captured-canvas');
+        const confirmationImage = document.getElementById('confirmation-image');
+        const analysisImage = document.getElementById('analysis-image');
         const chatLog = document.getElementById('chat-log');
         const chatForm = document.getElementById('chat-form');
         const chatInput = document.getElementById('chat-input');
         
-        let sessionId; // To store the current chat session ID
+        // Views
+        const liveFeedView = document.getElementById('live-feed-view');
+        const confirmationView = document.getElementById('confirmation-view');
+        const analysisView = document.getElementById('analysis-view');
         
-        // --- [showView, startCamera, showConfirmation functions remain the same] ---
+        let stream;
+        let imageDataURL;
+        let sessionId; // To store the current chat session ID
 
+        function showView(viewName) {
+            liveFeedView.classList.add('hidden');
+            confirmationView.classList.add('hidden');
+            analysisView.classList.add('hidden');
+            document.getElementById(viewName).classList.remove('hidden');
+        }
+
+        async function startCamera() {
+            try {
+                if (stream) stream.getTracks().forEach(track => track.stop());
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                videoFeed.srcObject = stream;
+                showView('live-feed-view');
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                alert("Could not access the camera. Please ensure you have given permission.");
+            }
+        }
+
+        function showConfirmation(dataUrl) {
+            imageDataURL = dataUrl;
+            confirmationImage.src = imageDataURL;
+            showView('confirmation-view');
+        }
+        
         function appendMessage(text, sender) {
             const bubble = document.createElement('div');
             bubble.className = `chat-bubble-${sender} p-3 rounded-lg max-w-xs lg:max-w-md break-words`;
@@ -78,6 +139,25 @@
             chatLog.appendChild(bubble);
             chatLog.scrollTop = chatLog.scrollHeight; // Auto-scroll to bottom
         }
+
+        captureBtn.addEventListener('click', () => {
+            const context = capturedCanvas.getContext('2d');
+            capturedCanvas.width = videoFeed.videoWidth;
+            capturedCanvas.height = videoFeed.videoHeight;
+            context.drawImage(videoFeed, 0, 0, videoFeed.videoWidth, videoFeed.videoHeight);
+            showConfirmation(capturedCanvas.toDataURL('image/jpeg'));
+        });
+
+        uploadInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => showConfirmation(e.target.result);
+                reader.readAsDataURL(file);
+            }
+        });
+
+        backBtn.addEventListener('click', startCamera);
 
         analyzeBtn.addEventListener('click', async () => {
             showView('analysis-view');
@@ -113,7 +193,6 @@
             chatInput.value = '';
             chatInput.disabled = true;
 
-            // Show a temporary thinking bubble for AI
             const thinkingBubble = document.createElement('div');
             thinkingBubble.className = 'chat-bubble-ai p-3 rounded-lg max-w-xs lg:max-w-md';
             thinkingBubble.innerHTML = '<span class="italic">Thinking...</span>';
@@ -129,7 +208,7 @@
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
                 const data = await response.json();
-                chatLog.removeChild(thinkingBubble); // Remove "Thinking..." bubble
+                chatLog.removeChild(thinkingBubble);
                 appendMessage(data.response, 'ai');
 
             } catch (error) {

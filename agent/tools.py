@@ -12,6 +12,16 @@ google_api_key = os.environ.get("GOOGLE_API_KEY")
 if not google_api_key:
     raise ValueError("GOOGLE_API_KEY not found in environment variables. Please set it in your .env file.")
 
+# --- 2. OPTIMIZATION: Create a single, reusable model instance ---
+# This instance will be used by all tools, preventing new connections for every call.
+try:
+    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=google_api_key)
+    print("Google AI Model initialized successfully.")
+except Exception as e:
+    llm = None
+    print(f"Error initializing Google AI Model: {e}")
+
+
 # --- 2. Core Helper Functions ---
 def _image_to_base64(image_path):
     """Converts an image file to a Base64 encoded string."""
@@ -24,10 +34,11 @@ def _image_to_base64(image_path):
 
 def _invoke_vision_model(prompt, base64_image):
     """A generic function to invoke the Gemini vision model with a prompt and image."""
+    if not llm:
+        return "Error: Vision model is not available."
     if not base64_image:
         return "Error: Could not process image."
         
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=google_api_key)
     message = HumanMessage(
         content=[
             {"type": "text", "text": prompt},
@@ -110,6 +121,9 @@ def continue_chat(chat_history: list):
     """
     TOOL 6: Takes the existing chat history and generates the next AI response.
     """
+    if not llm:
+        return "Error: Chat model is not available."
+    
     # The first message from the AI is the initial, detailed analysis.
     # We use this as the context for all future questions.
     initial_analysis = chat_history[0][1]
@@ -118,7 +132,7 @@ def continue_chat(chat_history: list):
     messages = [
         SystemMessage(content=f"You are an expert electronics assistant. You have already performed an analysis of a component with the following result: '{initial_analysis}'. Now, answer the user's follow-up questions based on this analysis and your general knowledge. Keep your answers concise and helpful."),
     ]
-    
+
     # Add the rest of the history, converting our simple tuple format to LangChain messages
     for role, content in chat_history[1:]:
         if role == "human":

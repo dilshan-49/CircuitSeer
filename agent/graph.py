@@ -13,6 +13,7 @@ from agent import tools
 class AgentState(TypedDict):
     image_path: str  # The path to the image being analyzed
     component_type: str  # The identified type of the component (e.g., 'Resistor')
+    raw_analysis: str # The raw analysis result from the vision model
     analysis_result: str # The final, detailed analysis from the specialist tool
     error: str # To hold any error messages
 
@@ -52,7 +53,25 @@ def analysis_node(state: AgentState):
     else: # Fallback for Diodes, Transistors, LEDs, etc.
         analysis_result = tools.analyze_generic_component(image_path)
         
-    return {"analysis_result": analysis_result}
+    return {"raw_analysis": analysis_result}
+
+def summarization_node(state: AgentState):
+    """NEW NODE: Takes the raw analysis and creates a user-friendly summary."""
+    print("---NODE: SUMMARIZING ANALYSIS---")
+    raw_analysis = state.get("raw_analysis")
+
+    if not raw_analysis:
+        error_msg = "Error: Raw analysis was not found in the agent's state. Cannot proceed with summarization."
+        print(error_msg)
+        return {"analysis_result": error_msg}
+
+    if raw_analysis.startswith("API_ERROR:"):
+        # If the analysis failed, pass the error through
+        return {"analysis_result": raw_analysis}
+
+    # If we have a valid raw analysis, summarize it
+    summary = tools.summarize_analysis(raw_analysis)
+    return {"analysis_result": summary}
 
 def error_node(state: AgentState):
     """
@@ -96,22 +115,18 @@ def create_graph():
     workflow.add_node("identifier", identification_node)
     workflow.add_node("analyzer", analysis_node)
     workflow.add_node("error_handler", error_node)
-
+    workflow.add_node("summarizer", summarization_node)
+    
     # Set the entry point of the graph
     workflow.set_entry_point("identifier")
 
     # Add the conditional edges
-    workflow.add_conditional_edges(
-        "identifier",
-        router,
-        {
-            "analyze": "analyzer",
-            "error": "error_handler"
-        }
-    )
+    workflow.add_conditional_edges("identifier", router, {"analyze": "analyzer", "error": "error_handler"})
+
 
     # Add the final edges
-    workflow.add_edge("analyzer", END)
+    workflow.add_edge("analyzer", "summarizer")
+    workflow.add_edge("summarizer", END)
     workflow.add_edge("error_handler", END)
 
     # Compile the graph into a runnable app

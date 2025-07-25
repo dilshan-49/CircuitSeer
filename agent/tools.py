@@ -1,8 +1,6 @@
 import os
 import base64
 from dotenv import load_dotenv
-from typing import Optional
-import json 
 
 # LangChain and Google Gemini Imports
 from langchain_openai import ChatOpenAI
@@ -10,21 +8,17 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 
-# --- 1. Pydantic Models for Structured Output ---
-# We define the exact JSON structure we want for each component type.
-
-
-
-# --- 2. Configuration and Model Initialization ---
+# --- 1. Configuration and Model Initialization ---
 
 load_dotenv()
+
 api_base = os.environ.get("DO_API_BASE")
 do_api_key = os.environ.get("DO_API_KEY")
 gemini_api_key = os.environ.get("GOOGLE_API_KEY")
 chat_model = os.environ.get("DO_CHAT_MODEL")
 
 if not all([api_base, do_api_key, gemini_api_key, chat_model]):
-    raise ValueError("One or more DigitalOcean environment variables are missing.")
+    raise ValueError("One or more environment variables are missing.")
 
 
 try:
@@ -39,7 +33,7 @@ try:
 
     chat_llm = ChatOpenAI(model=chat_model, 
                           api_key=do_api_key, 
-                          base_url=api_base,
+                          base_url=api_base, 
                           temperature=0.5)
     print(f"Chat Model {chat_model} initialized successfully.")
 
@@ -48,7 +42,7 @@ except Exception as e:
     print(f"Error initializing models: {e}")
 
 
-# --- 3. Core Helper Functions ---
+# --- 2. Core Helper Functions ---
 def _image_to_base64(image_path):
     try:
         with open(image_path, "rb") as image_file:
@@ -100,15 +94,10 @@ def analyze_resistor(image_path):
     """Analyzes a resistor and returns a structured JSON object."""
     base64_image = _image_to_base64(image_path)
     prompt = """
-    You are an expert electronics technician. Analyze the resistor in the image.
-    Format your final response as a clean, human-readable text block using Markdown for clarity. Use bullet points.
-    Example Response:
-    **Type:** Through-Hole (THT) Resistor
-    * **Color Bands:** Red, Red, Brown, Gold
-    * **Calculation:** 2, 2, x10^1 Ω = 220Ω
-    * **Tolerance:** ±5%
-    * **Power Rating:** 1/4W (estimated)
-    """
+    You are an expert electronics technician. 
+    Provide a detailed analysis of the resistor in the image, covering its type (THT/SMD), resistance, tolerance, and power rating.
+    Include all the details that can be inferred from the image."""
+
     return _invoke_vision_model(prompt, base64_image)
 
 def analyze_capacitor(image_path):
@@ -116,8 +105,8 @@ def analyze_capacitor(image_path):
     base64_image = _image_to_base64(image_path)
     prompt = """
     You are an expert electronics technician. Analyze the capacitor in the image.
-    Format your final response as a clean, human-readable text block using Markdown. Use bullet points.
-    """
+    Provide a detailed analysis of the capacitor in the image, covering its type (THT/SMD), capacitance value, voltage rating, and tolerance.
+    Include all the details that can be inferred from the image."""
     return _invoke_vision_model(prompt, base64_image)
 
 def analyze_ic(image_path):
@@ -125,8 +114,8 @@ def analyze_ic(image_path):
     base64_image = _image_to_base64(image_path)
     prompt = """
     You are an expert electronics technician. Analyze the Integrated Circuit (IC) in the image.
-    Format your final response as a clean, human-readable text block using Markdown. Use bullet points.
-    """
+    Provide a detailed analysis of the Integrated Circuit (IC) in the image, covering the primary part number, manufacturer, and any secondary markings.
+    Include all the details that can be inferred from the image."""
     return _invoke_vision_model(prompt, base64_image)
 
 def analyze_generic_component(image_path):
@@ -134,11 +123,32 @@ def analyze_generic_component(image_path):
     base64_image = _image_to_base64(image_path)
     prompt = """
     You are an expert electronics technician. Analyze the component in the image.
-    Format your final response as a clean, human-readable text block using Markdown. Use bullet points.
+    Provide a detailed analysis of the component, identifying its likely type and explaining all visible markings and features.
     """
     return _invoke_vision_model(prompt, base64_image)
 
 
+# --- 4. NEW Summarization and Chat Tools ---
+def summarize_analysis(analysis_text: str):
+    """Takes a long analysis and creates a concise, formatted summary using the chat model."""
+    if not chat_llm: return "Error: Chat model is not available for summarization."
+    
+    prompt = f"""
+    You are a helpful assistant. Your task is to summarize a detailed technical analysis of an electronic component into a brief, user-friendly format.
+    Use Markdown with bullet points for the key specifications. Do not include recommendations or extra paragraphs.
+
+    Here is the detailed analysis to summarize:
+    ---
+    {analysis_text}
+    ---
+
+    Provide the concise summary now.
+    """
+    try:
+        response = chat_llm.invoke([HumanMessage(content=prompt)])
+        return response.content
+    except Exception as e:
+        return f"API_ERROR: Failed to summarize analysis. Details: {e}"
 
 
 # --- 5. Chat Continuation Tool ---

@@ -6,6 +6,7 @@
     <title>CircuitSeer | Visual Inspector</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .hidden { display: none; }
@@ -13,6 +14,7 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .chat-bubble-human { background-color: #3b82f6; color: white; align-self: flex-end; }
         .chat-bubble-ai { background-color: #374151; color: #e5e7eb; align-self: flex-start; }
+        .chat-bubble-ai ul { list-style-type: disc; padding-left: 20px; }    
     </style>
 </head>
 <body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
@@ -105,6 +107,8 @@
         const liveFeedView = document.getElementById('live-feed-view');
         const confirmationView = document.getElementById('confirmation-view');
         const analysisView = document.getElementById('analysis-view');
+        const converter = new showdown.Converter();
+
         let stream;
         let imageDataURL;
         let sessionId;
@@ -137,7 +141,15 @@
         function appendMessage(text, sender) {
             const bubble = document.createElement('div');
             bubble.className = `chat-bubble-${sender} p-3 rounded-lg max-w-md break-words whitespace-pre-wrap`;
-            bubble.textContent = text;
+            if (sender === 'ai') {
+                // If the message is from the AI, convert Markdown to HTML
+                const html = converter.makeHtml(text);
+                bubble.innerHTML = html;
+            } else {
+                // If it's from the user, just display plain text
+                bubble.textContent = text;
+            }
+            
             chatLog.appendChild(bubble);
             chatLog.scrollTop = chatLog.scrollHeight;
         }

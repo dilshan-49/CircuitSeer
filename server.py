@@ -40,15 +40,17 @@ def analyze_image_endpoint():
         initial_state = {"image_path": image_filename}
         final_state = langgraph_app.invoke(initial_state)
         
-        analysis_string = final_state.get("analysis_result", "Error: No analysis result found in agent output.")
+        raw_analysis = final_state.get("raw_analysis", "No detailed analysis was generated.")
+        summarized_analysis = final_state.get("analysis_result", "Error: No summary was generated.")
         
-        if "API_ERROR" in analysis_string or "Analysis Failed" in analysis_string:
-             return jsonify({"error": analysis_string}), 500
+        if "API_ERROR" in summarized_analysis or "Analysis Failed" in summarized_analysis:
+            return jsonify({"error": summarized_analysis}), 500
 
         session_id = str(uuid.uuid4())
-        sessions[session_id] = [("ai", analysis_string)]
+        sessions[session_id] = [("ai", raw_analysis)]
+        sessions[session_id].append(("ai", summarized_analysis))
         
-        return jsonify({"analysis": analysis_string, "session_id": session_id})
+        return jsonify({"analysis": summarized_analysis, "session_id": session_id})
 
     except Exception as e:
         print("--- UNHANDLED EXCEPTION IN /analyze ---")

@@ -1,63 +1,70 @@
-# CircuitSeer: AI Visual Inspection Agent
+# CircuitSeer: AI Visual Inspection Desktop App
 
 ![CircuitSeer Banner](https://placehold.co/1200x300/020617/7c3aed?text=CircuitSeer&font=inter)
 
-CircuitSeer is an intelligent agent designed to assist electronics engineers and hobbyists by automating the identification and analysis of electronic components. Using a simple web interface and the power of large language models, you can capture or upload an image of a component, and CircuitSeer will provide a detailed analysis of its specifications.
+CircuitSeer is a standalone desktop application designed to assist electronics engineers and hobbyists by automating the identification and analysis of electronic components. Using a clean, native UI, you can capture an image from a webcam or upload a file, and CircuitSeer will provide a detailed analysis and allow you to ask follow-up questions in a conversational chat.
 
-This project leverages the LangGraph framework to create a stateful, multi-step agent that can reason about what it sees and decide which specialized tool to use for analysis.
+This project leverages a sophisticated hybrid AI model approach and the LangGraph framework to create a stateful, multi-step agent that can reason about what it sees and decide which specialized tool to use for analysis and conversation.
 
 ---
 
 ## ✨ Features
 
-- **Component Identification**: Automatically identifies the type of component (Resistor, Capacitor, IC, etc.).
-- **THT & SMD Analysis**: Intelligently handles both Through-Hole and Surface-Mount components.
-  - **Resistors**: Reads color codes (THT) or numerical codes (SMD) to determine resistance.
-  - **Capacitors**: Reads printed values (THT) or 3-digit codes (SMD) to determine capacitance.
-  - **ICs**: Identifies model numbers and manufacturers.
-- **Web-Based UI**: An intuitive interface to capture images from a webcam or upload existing files.
-- **Real-time Analysis**: Provides detailed analysis results directly in the browser.
+-   **Standalone Desktop Application**: Runs in its own native window without needing a web browser, providing a professional, focused experience.
+-   **Hybrid AI Backend**: Utilizes Google Gemini for robust, state-of-the-art vision analysis and a fast DigitalOcean model (e.g., Claude 3.7 Sonnet) for responsive, high-quality conversational chat.
+-   **Component Identification**: Automatically identifies the type of component (Resistor, Capacitor, IC, etc.).
+-   **Detailed THT & SMD Analysis**: Intelligently handles both Through-Hole and Surface-Mount components with detailed, formatted output.
+-   **Conversational Follow-up**: Engage in a chat with the AI assistant to ask further questions about the analyzed component (e.g., "What are its common uses?", "Suggest an alternative.").
+-   **Dual Input Methods**: Analyze components using a live webcam feed or by uploading an existing image file.
+-   **Clean Shutdown**: A dedicated power button in the UI cleanly terminates both the frontend window and the backend server.
 
 ---
 
 ## 🛠️ How It Works
 
-The project uses a client-server architecture:
+CircuitSeer is a unified desktop application built on a client-server architecture, wrapped in a native window.
 
-1. **Frontend (`index.html`)**: A single-page web application that captures/uploads an image and displays the results.
-2. **Backend (`server.py`)**: A Flask web server that provides an API endpoint (`/analyze`). It receives the image from the frontend.
-3. **AI Agent (`agent/graph.py`)**: The Flask server invokes a LangGraph agent. The agent first runs an `identification_node` to determine the component type.
-4. **Router & Tools (`agent/tools.py`)**: Based on the component type, a router directs the agent to use a specialized analysis tool (e.g., `analyze_resistor`). This tool uses a tailored prompt to get detailed specs from the Google Gemini vision model.
-5. **LLM API**: The agent communicates with the Google Gemini 1.5 Flash API to perform the visual analysis.
+1.  **Application Wrapper (`app.py`)**: The main entry point. It uses `pywebview` to create a native desktop window. It also starts the Flask backend server in a separate, background thread.
+2.  **Frontend (`templates/index.html`)**: A single-page web application that runs inside the `pywebview` window. It handles the camera feed, image uploads, and all user interactions, communicating with the backend via local HTTP requests.
+3.  **Backend (`server.py`)**: A Flask web server that provides API endpoints (`/analyze`, `/chat`, `/shutdown`). It receives requests from the frontend and manages the AI agent's sessions.
+4.  **AI Agent (`agent/graph.py`)**: The Flask server invokes a LangGraph agent for each new analysis. The agent follows a defined workflow:
+    -   **Identification Node**: First, it uses the Gemini vision model to identify the component type.
+    -   **Analysis Node**: Based on the type, a router directs the agent to use a specialized analysis tool.
+5.  **AI Tools (`agent/tools.py`)**: These are the functions that interact with the AI models:
+    -   **Vision Tools**: Send the image and a detailed prompt to the **Google Gemini** API to get a comprehensive analysis.
+    -   **Chat Tool**: Sends the conversation history and a new user query to the **DigitalOcean** chat model API to get a context-aware response.
 
 ---
 
 ## 🚀 Technology Stack
 
-- **Backend**: Python, Flask, LangChain, LangGraph
-- **AI Model**: Google Gemini 1.5 Flash
-- **Frontend**: HTML, Tailwind CSS, JavaScript
-- **Core Libraries**: `opencv-python`, `python-dotenv`
+-   **Application Wrapper**: `pywebview`
+-   **Backend**: Python, Flask, LangChain, LangGraph
+-   **AI Models**:
+    -   **Vision**: Google Gemini 1.5 Flash (via `langchain-google-genai`)
+    -   **Chat**: DigitalOcean Serverless Inference (e.g., `anthropic-claude-3.7-sonnet` via `langchain-openai`)
+-   **Frontend**: HTML, Tailwind CSS, JavaScript, Showdown.js (for Markdown rendering)
+-   **Core Libraries**: `opencv-python`, `python-dotenv`
 
 ---
 
 ## 📂 Project Structure
 
-```bash
+```
 CircuitSeer/
 │
 ├── agent/
 │   ├── __init__.py
 │   ├── graph.py          # Defines the LangGraph agent structure
-│   └── tools.py          # Contains specialist analysis functions (tools)
+│   └── tools.py          # Contains specialist analysis & chat tools
 │
-├── utils/
-│   └── camera.py         # (Optional) For any advanced camera logic
+├── templates/
+│   └── index.html        # The frontend web interface
 │
-├── temp_images/          # Temporary storage for images being analyzed
+├── temp_images/          # Temporary storage for images
 │
+├── app.py                # The main script to launch the application
 ├── server.py             # The Flask backend server
-├── index.html            # The frontend web interface
 │
 ├── .env                  # Stores secret API keys
 └── requirements.txt      # Project dependencies
@@ -67,24 +74,23 @@ CircuitSeer/
 
 ## ⚙️ Setup and Installation
 
-Follow these steps to get CircuitSeer running on your local machine.
-
 ### Prerequisites
 
-- Python 3.8+
-- A webcam (for live capture)
-- A Google API Key with the Gemini API enabled.
+-   Python 3.8+
+-   A webcam (for live capture)
+-   A Google API Key with the Gemini API enabled.
+-   A DigitalOcean Model Access Key and API Base URL.
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/dilshan-49/CircuitSeer.git
+git clone [https://github.com/your-username/CircuitSeer.git](https://github.com/your-username/CircuitSeer.git)
 cd CircuitSeer
 ```
 
-### 2. Set Up Python Environment
+### 2. Set Up Python Environment & Install Dependencies
 
-It's recommended to use a virtual environment.
+It's highly recommended to use a virtual environment.
 
 ```bash
 # Create a virtual environment
@@ -95,46 +101,43 @@ python -m venv venv
 venv\Scripts\activate
 # On macOS/Linux:
 source venv/bin/activate
-```
 
-### 3. Install Dependencies
-
-Install all the required Python packages.
-
-```bash
+# Install all required packages
 pip install -r requirements.txt
 ```
 
-### 4. Configure API Key
+### 3. Configure API Keys
 
-Create a file named `.env` in the root of the project folder and add your Google API key:
+Create a file named `.env` in the root of the project folder and add your API keys:
 
-```bash
-GOOGLE_API_KEY="your_secret_google_api_key_here"
+```env
+# --- Google Credentials (for Vision) ---
+GOOGLE_API_KEY="your_google_api_key_here"
+
+# --- DigitalOcean Credentials (for Chat) ---
+DO_API_BASE="[https://inference.do-ai.run/v1](https://inference.do-ai.run/v1)"
+DO_API_KEY="your_digitalocean_api_key"
+DO_CHAT_MODEL="anthropic-claude-3.7-sonnet"
 ```
 
-### 5. Run the Application
+---
 
-You need to run the backend server first.
+## ▶️ How to Run
+
+To start the entire application (both the server and the UI), run the `app.py` script from your terminal:
 
 ```bash
-python server.py
+python app.py
 ```
 
-This will start the Flask server, typically on `http://127.0.0.1:5000`.
-
-### 6. Launch the Frontend
-
-Open the `index.html` file in your web browser (e.g., Chrome, Firefox). The application should now be running!
+A native desktop window for CircuitSeer will open.
 
 ---
 
 ## 📖 Usage
 
-1. **Open `index.html`** in your browser.
-2. Allow the browser to access your camera.
-3. **To use the camera**: Position a component in the camera's view and click **"Capture Image"**.
-4. **To upload a file**: Click **"Upload Image"** and select an image file from your device.
-5. On the confirmation screen, click **"Analyze Image"**.
-6. Wait for the AI analysis to appear on the right side of the screen.
-7. Click **"Start Over"** to analyze another component.
+1.  **Capture or Upload**: Use the live camera feed and the **"Capture Image"** button, or click **"Upload Image"** to select a file from your computer.
+2.  **Confirm**: Review the captured image and click **"Analyze Image"**.
+3.  **Analyze**: The initial analysis from the AI will appear in the chat window on the right.
+4.  **Chat**: Use the input box at the bottom of the chat window to ask follow-up questions.
+5.  **Exit**: Click the red power icon in the top-right corner to cleanly shut down the application.

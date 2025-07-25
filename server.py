@@ -3,49 +3,32 @@ import base64
 import uuid
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import traceback
 
-# Import the graph creation function from your agent code
 from agent.graph import create_graph
 
-# --- 1. Initialize Flask App and CORS ---
-# CORS is needed to allow the browser (on a different port) to talk to this server.
 app = Flask(__name__)
 CORS(app)
-
-# This is our simple in-memory session storage.
-# In a production app, you'd use a database like Redis.
-# Format: { "session_id": chat_history_list }
 sessions = {}
 
-# --- 2. Create a single instance of the LangGraph agent ---
-# We create it once when the server starts so it's ready to go.
+# Initialize the agent once on startup
+langgraph_app = None
 try:
     langgraph_app = create_graph()
-    print("Agent created successfully.")
 except Exception as e:
-    print(f"FATAL: Could not create Agent. Error: {e}")
-    langgraph_app = None
+    print(f"FATAL: Could not create LangGraph agent on startup. Error: {e}")
+    traceback.print_exc()
 
-# --- 3. Define the API Endpoint ---
 @app.route('/analyze', methods=['POST'])
 def analyze_image_endpoint():
-    """
-    This function is called when the frontend sends an image for analysis.
-    """
     if not langgraph_app:
-        return jsonify({"error": "Agent is not available."}), 500
+        return jsonify({"error": "Analysis agent is not available. Check server logs."}), 500
 
-    print("Received request at /analyze endpoint.")
+    if 'image' not in request.get_json():
+        return jsonify({"error": "No image data provided in the request."}), 400
+        
+    image_data = base64.b64decode(request.get_json()['image'])
     
-    # Get the image data from the request
-    data = request.get_json()
-    if not data or 'image' not in data:
-        return jsonify({"error": "No image data provided."}), 400
-
-    image_data = base64.b64decode(data['image'])
-    
-    # Save the image to a temporary file
-    # Using a unique filename to avoid conflicts
     temp_dir = "temp_images"
     os.makedirs(temp_dir, exist_ok=True)
     image_filename = os.path.join(temp_dir, f"{uuid.uuid4()}.jpg")
@@ -53,73 +36,44 @@ def analyze_image_endpoint():
     try:
         with open(image_filename, 'wb') as f:
             f.write(image_data)
-        print(f"Image saved temporarily to {image_filename}")
 
-        # --- 4. Run the LangGraph Agent ---
-        # The initial state for the graph requires the image path
-        initial_state = {"image_path": image_filename, "chat_history":[]}
-        
-        # Invoke the agent with the initial state
+        initial_state = {"image_path": image_filename}
         final_state = langgraph_app.invoke(initial_state)
         
-        # Extract the final analysis result from the agent's state
-        analysis = final_state.get("analysis_result", "No analysis result found.")
+        analysis_string = final_state.get("analysis_result", "Error: No analysis result found in agent output.")
         
+        if "API_ERROR" in analysis_string or "Analysis Failed" in analysis_string:
+             return jsonify({"error": analysis_string}), 500
 
-        # Create a new session
         session_id = str(uuid.uuid4())
-        # Store the initial analysis as the first AI message in the chat history
-        sessions[session_id] = [("ai", analysis)]
+        sessions[session_id] = [("ai", analysis_string)]
         
-        print(f"New session created: {session_id}")
-        return jsonify({"analysis": analysis, "session_id": session_id})
+        return jsonify({"analysis": analysis_string, "session_id": session_id})
 
     except Exception as e:
-        print(f"An error occurred during analysis: {e}")
-        return jsonify({"error": str(e)}), 500
-    
+        print("--- UNHANDLED EXCEPTION IN /analyze ---")
+        traceback.print_exc()
+        print("------------------------------------")
+        return jsonify({"error": f"An unexpected server error occurred: {e}"}), 500
     finally:
-        # Clean up the temporary image file
         if os.path.exists(image_filename):
             os.remove(image_filename)
-            print(f"Cleaned up temporary file: {image_filename}")
-
 
 @app.route('/chat', methods=['POST'])
 def chat_endpoint():
-    """
-    Endpoint to handle follow-up chat messages for an existing session.
-    """
     data = request.get_json()
-    session_id = data.get('session_id')
-    user_message = data.get('message')
-
-    if not session_id or session_id not in sessions:
-        return jsonify({"error": "Invalid or missing session ID."}), 400
-    if not user_message:
-        return jsonify({"error": "No message provided."}), 400
-
-    # Retrieve the history and add the new user message
+    session_id, user_message = data.get('session_id'), data.get('message')
+    if not all([session_id, user_message]) or session_id not in sessions:
+        return jsonify({"error": "Invalid request. Missing session_id or message."}), 400
+    
     chat_history = sessions[session_id]
     chat_history.append(("human", user_message))
     
-    # We need to re-run the graph, but starting from the chat node.
-    # For simplicity here, we'll just call a chat tool directly.
-    # In a more complex graph, you would invoke a specific part of it.
     from agent.tools import continue_chat
-    
-    # The `continue_chat` tool needs the full history
     ai_response = continue_chat(chat_history)
     
-    # Update the session history with the new AI response
     sessions[session_id].append(("ai", ai_response))
-    
-    print(f"Responded to chat in session: {session_id}")
     return jsonify({"response": ai_response})
 
-
-# --- 5. Main Execution Block ---
 if __name__ == '__main__':
-    # Run the Flask server
-    # host='0.0.0.0' makes it accessible on your local network
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)

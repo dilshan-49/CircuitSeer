@@ -100,9 +100,14 @@ def analyze_resistor(image_path):
     """Analyzes a resistor and returns a structured JSON object."""
     base64_image = _image_to_base64(image_path)
     prompt = """
-    You are an expert electronics technician providing a quick summary for a colleague.
-    Analyze the resistor and provide ONLY its key specifications with a single sentence mentioning the type of component. Do not add extra descriptions or recommendations.
-    Format your response using Markdown bullet points.
+    You are an expert electronics technician. Analyze the resistor in the image.
+    Format your final response as a clean, human-readable text block using Markdown for clarity. Use bullet points.
+    Example Response:
+    **Type:** Through-Hole (THT) Resistor
+    * **Color Bands:** Red, Red, Brown, Gold
+    * **Calculation:** 2, 2, x10^1 Ω = 220Ω
+    * **Tolerance:** ±5%
+    * **Power Rating:** 1/4W (estimated)
     """
     return _invoke_vision_model(prompt, base64_image)
 
@@ -110,10 +115,8 @@ def analyze_capacitor(image_path):
     """Analyzes a capacitor and returns a structured JSON object."""
     base64_image = _image_to_base64(image_path)
     prompt = """
-    You are an expert electronics technician providing a quick summary for a colleague.
-    Analyze the capacitor in the image. Identify its type (e.g., Ceramic, Electrolytic), form (THT/SMD), capacitance, voltage rating etc.
-    
-    Provide ONLY these key specifications in a Markdown bulleted list with a single sentence mentioning the type of component. Do not add extra paragraphs about case style, applications, or polarity unless it's a direct marking.
+    You are an expert electronics technician. Analyze the capacitor in the image.
+    Format your final response as a clean, human-readable text block using Markdown. Use bullet points.
     """
     return _invoke_vision_model(prompt, base64_image)
 
@@ -121,11 +124,8 @@ def analyze_ic(image_path):
     """Analyzes an IC and returns a structured JSON object."""
     base64_image = _image_to_base64(image_path)
     prompt = """
-    You are an expert electronics technician providing a quick summary for a colleague.
-    Analyze the Integrated Circuit (IC). Identify the primary part number and the manufacturer and other specs based on the image.
-    
-    Provide these key details in a Markdown bulleted list along with a single sentence mentioning the type of component.
-    keep your response concise and focused on the IC's key specifications and short as possible.
+    You are an expert electronics technician. Analyze the Integrated Circuit (IC) in the image.
+    Format your final response as a clean, human-readable text block using Markdown. Use bullet points.
     """
     return _invoke_vision_model(prompt, base64_image)
 
@@ -133,12 +133,11 @@ def analyze_generic_component(image_path):
     """Analyzes a generic component and returns a structured JSON object."""
     base64_image = _image_to_base64(image_path)
     prompt = """
-    You are an expert electronics technician providing a quick summary for a colleague.
-    Identify the component's most likely type (e.g., Diode, Transistor) and list its key markings or part numbers.
-    
-    Be brief and use a Markdown bulleted list.
+    You are an expert electronics technician. Analyze the component in the image.
+    Format your final response as a clean, human-readable text block using Markdown. Use bullet points.
     """
     return _invoke_vision_model(prompt, base64_image)
+
 
 
 

@@ -1,8 +1,8 @@
-# CircuitSeer: AI Visual Inspection Desktop App
+# CircuitSeer: AI Visual Inspection App
 
 ![CircuitSeer Banner](https://placehold.co/1200x300/020617/7c3aed?text=CircuitSeer&font=inter)
 
-CircuitSeer is a standalone desktop application designed to assist electronics engineers and hobbyists by automating the identification and analysis of electronic components. Using a clean, native UI, you can capture an image from a webcam or upload a file, and CircuitSeer will provide a detailed analysis and allow you to ask follow-up questions in a conversational chat.
+CircuitSeer is a standalone application designed to assist electronics engineers and hobbyists by automating the identification and analysis of electronic components. Using a clean, native UI, you can capture an image from a webcam or upload a file, and CircuitSeer will provide a detailed analysis and allow you to ask follow-up questions in a conversational chat.
 
 This project leverages a sophisticated hybrid AI model approach and the LangGraph framework to create a stateful, multi-step agent that can reason about what it sees and decide which specialized tool to use for analysis and conversation.
 
@@ -11,7 +11,7 @@ This project leverages a sophisticated hybrid AI model approach and the LangGrap
 ## ✨ Features
 
 - **Standalone Desktop Application**: Runs in its own native window without needing a web browser, providing a professional, focused experience.
-- **Hybrid AI Backend**: Utilizes Google Gemini for robust, state-of-the-art vision analysis and a fast DigitalOcean model (e.g., Claude 3.7 Sonnet) for responsive, high-quality conversational chat.
+- **Hybrid AI Backend**: Utilizes Google Gemini for robust, state-of-the-art vision analysis and a fast DigitalOcean model (e.g., openai-gpt-4o-mini) for responsive, high-quality conversational chat.
 - **Component Identification**: Automatically identifies the type of component (Resistor, Capacitor, IC, etc.).
 - **Detailed THT & SMD Analysis**: Intelligently handles both Through-Hole and Surface-Mount components with detailed, formatted output.
 - **Conversational Follow-up**: Engage in a chat with the AI assistant to ask further questions about the analyzed component (e.g., "What are its common uses?", "Suggest an alternative.").
@@ -42,7 +42,7 @@ CircuitSeer is a unified desktop application built on a client-server architectu
 - **Backend**: Python, Flask, LangChain, LangGraph
 - **AI Models**:
   - **Vision**: Google Gemini 1.5 Flash (via `langchain-google-genai`)
-  - **Chat**: DigitalOcean Serverless Inference (e.g., `anthropic-claude-3.7-sonnet` via `langchain-openai`)
+  - **Chat**: DigitalOcean Serverless Inference (e.g., `openai-gpt-4o-mini` via `langchain-openai`)
 - **Frontend**: HTML, Tailwind CSS, JavaScript, Showdown.js (for Markdown rendering)
 - **Core Libraries**: `opencv-python`, `python-dotenv`
 
@@ -84,7 +84,7 @@ CircuitSeer/
 ### 1. Clone the Repository
 
 ```bash
-git clone [https://github.com/your-username/CircuitSeer.git](https://github.com/your-username/CircuitSeer.git)
+git clone https://github.com/dilshan-49/CircuitSeer.git
 cd CircuitSeer
 ```
 
@@ -141,3 +141,17 @@ A native desktop window for CircuitSeer will open.
 3. **Analyze**: The initial analysis from the AI will appear in the chat window on the right.
 4. **Chat**: Use the input box at the bottom of the chat window to ask follow-up questions.
 5. **Exit**: Click the red power icon in the top-right corner to cleanly shut down the application.
+
+---
+
+## 🔮 Potential Future Developments
+
+I believe this project provides a solid foundation that can be extended in several exciting directions to create an even more powerful assistant. Some potential enhancements are:
+
+- **RAG-Powered Knowledge Base**: To improve factual accuracy, a Retrieval-Augmented Generation (RAG) architecture could be implemented. This would involve creating a vector database from component datasheets(can use knowledgebase from the Digital Ocean services), allowing the agent to ground its answers in verifiable technical documentation.
+
+- **E-commerce Sourcing Agent**: A new agent tool could be developed to search online electronics vendors (e.g., Digi-Key, Mouser). This would enable users to ask "Where can I buy this?" and receive a list of suppliers, prices, and direct product links.
+
+- **Full PCB Analysis**: The agent's capabilities could be expanded to analyze an entire Printed Circuit Board (PCB). This would allow users to upload a photo of a board and ask the agent to identify multiple components, locate specific parts, or describe different sections of the circuit.
+
+- **Project History & BOM Generation**: A feature could be added to save a history of all components analyzed for a specific project. From this history, the agent could be tasked with generating a complete Bill of Materials (BOM), including part numbers, specifications, and sourcing links.

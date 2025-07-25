@@ -21,20 +21,15 @@ class AgentState(TypedDict):
 # as input and returns a dictionary with the values to update in the state.
 
 def identification_node(state: AgentState):
-    """
-    First node: Takes the image path from the state and identifies the component type.
-    """
     print("---NODE: IDENTIFYING COMPONENT---")
     image_path = state.get("image_path")
-    if not image_path:
-        return {"error": "No image path provided to the identification node."}
+    component_type_result = tools.identify_component(image_path)
     
-    # Call the tool from tools.py
-    component_type = tools.identify_component(image_path)
-    
-    # Clean up the response from the LLM to be a single word
-    cleaned_type = component_type.strip().replace("'", "").replace(".", "")
-    
+    if component_type_result.startswith("API_ERROR:"):
+        print(f"Error during identification: {component_type_result}")
+        return {"error": component_type_result}
+
+    cleaned_type = component_type_result.strip().replace("'", "").replace(".", "")
     print(f"Identified component type: {cleaned_type}")
     return {"component_type": cleaned_type}
 

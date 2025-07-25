@@ -1,127 +1,154 @@
 import os
 import base64
 from dotenv import load_dotenv
+from typing import Optional
+import json 
 
 # LangChain and Google Gemini Imports
+from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
-# --- 1. Configuration and API Key Setup ---
+
+# --- 1. Pydantic Models for Structured Output ---
+# We define the exact JSON structure we want for each component type.
+
+
+
+# --- 2. Configuration and Model Initialization ---
+
 load_dotenv()
-google_api_key = os.environ.get("GOOGLE_API_KEY")
-if not google_api_key:
-    raise ValueError("GOOGLE_API_KEY not found in environment variables. Please set it in your .env file.")
+api_base = os.environ.get("DO_API_BASE")
+do_api_key = os.environ.get("DO_API_KEY")
+gemini_api_key = os.environ.get("GOOGLE_API_KEY")
+chat_model = os.environ.get("DO_CHAT_MODEL")
 
-# --- 2. OPTIMIZATION: Create a single, reusable model instance ---
-# This instance will be used by all tools, preventing new connections for every call.
+if not all([api_base, do_api_key, gemini_api_key, chat_model]):
+    raise ValueError("One or more DigitalOcean environment variables are missing.")
+
+
 try:
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=google_api_key)
-    print("Google AI Model initialized successfully.")
+    # Initialize Vision Model
+    vlm = ChatGoogleGenerativeAI(
+        model="gemini-1.5-flash",
+        api_key=gemini_api_key
+    )
+    
+    # And a second instance configured for structured output
+    print("Vision Model initialized successfully.")
+
+    chat_llm = ChatOpenAI(model=chat_model, 
+                          api_key=do_api_key, 
+                          base_url=api_base,
+                          temperature=0.5)
+    print(f"Chat Model {chat_model} initialized successfully.")
+
 except Exception as e:
-    llm = None
-    print(f"Error initializing Google AI Model: {e}")
+    vlm, chat_llm = None, None, None
+    print(f"Error initializing models: {e}")
 
 
-# --- 2. Core Helper Functions ---
+# --- 3. Core Helper Functions ---
 def _image_to_base64(image_path):
-    """Converts an image file to a Base64 encoded string."""
     try:
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
     except FileNotFoundError:
-        print(f"Error: Image file not found at {image_path}")
         return None
 
 def _invoke_vision_model(prompt, base64_image):
-    """A generic function to invoke the Gemini vision model with a prompt and image."""
-    if not llm:
-        return "Error: Vision model is not available."
+    """Invokes the vision model"""
+    if not vlm:
+        return {"error": "Vision model is not available."}
+    
     if not base64_image:
-        return "Error: Could not process image."
-        
+        return {"error": "Could not process image."}
+
     message = HumanMessage(
         content=[
             {"type": "text", "text": prompt},
-            {
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
-            },
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}},
         ]
     )
-    print(f"Invoking model with prompt: '{prompt[:40]}...'")
     try:
-        response = llm.invoke([message])
-        print("Response received.")
+        print("Invoking vision model...")
+        response = vlm.invoke([message])
+        
+        # --- DEBUGGING: Print the raw response from the API ---
+        print(f"--- RAW API RESPONSE ---")
+        print(f"Type: {type(response)}")
+        print(f"Response Object: {response}")
+        print(f"------------------------")
+        
+        # If it's a normal string, return it directly
         return response.content
-    except Exception as e:
-        print(f"An error occurred while calling the LLM API: {e}")
-        return "Error: Failed to get a response from the vision model."
 
-# --- 3. Specialist Analysis Tools (with Updated Prompts) ---
+    except Exception as e:
+        print(f"An API error occurred: {e}")
+        return f"API_ERROR: An error occurred while contacting the vision model. Details: {e}"
+
+
+# --- 4. Specialist Analysis Tools (Updated to return JSON) ---
 
 def identify_component(image_path):
-    """
-    TOOL 1: Identifies the general type of the component.
-    """
+    """Identifies the general component type (returns a simple string)."""
     base64_image = _image_to_base64(image_path)
     prompt = "Analyze the electronic component in this image. Respond with only a single-word category from this list: 'Resistor', 'Capacitor', 'IC', 'Transistor', 'Diode', 'LED', 'PCB', 'Other'."
     return _invoke_vision_model(prompt, base64_image)
 
 def analyze_resistor(image_path):
-    """
-    TOOL 2: Analyzes a resistor, considering both THT and SMD types.
-    """
+    """Analyzes a resistor and returns a structured JSON object."""
     base64_image = _image_to_base64(image_path)
     prompt = """
-    Analyze the resistor in the image, considering it could be a Through-Hole (THT) or Surface-Mount (SMD) type.
-
-    - If it is a THT resistor (cylindrical with wires): Analyze its color bands from left to right to determine its resistance and tolerance. Also, based on its physical size, estimate its power rating (e.g., 1/4W, 1/2W, 1W).
-    - If it is an SMD resistor (small, rectangular chip): Read the numerical code printed on it (e.g., '103', '4R7') and calculate its resistance value. Explain the calculation (e.g., '103' is 10 x 10^3 ohms = 10kΩ).
-
-    Present the final analysis clearly, stating the determined type (THT or SMD) and its specifications.
+    You are an expert electronics technician providing a quick summary for a colleague.
+    Analyze the resistor and provide ONLY its key specifications with a single sentence mentioning the type of component. Do not add extra descriptions or recommendations.
+    Format your response using Markdown bullet points.
     """
     return _invoke_vision_model(prompt, base64_image)
 
 def analyze_capacitor(image_path):
-    """
-    TOOL 3: Analyzes a capacitor, considering both THT and SMD types.
-    """
+    """Analyzes a capacitor and returns a structured JSON object."""
     base64_image = _image_to_base64(image_path)
     prompt = """
-    Analyze the capacitor in the image, considering it could be a Through-Hole (THT) or Surface-Mount (SMD) type.
-
-    - If it is a THT capacitor (e.g., electrolytic, ceramic disc): Read the text on its body to find its capacitance (e.g., in µF, nF, or pF) and its maximum voltage rating (V).
-    - If it is an SMD capacitor (small, rectangular, usually brown/gray): Look for a numerical code (e.g., '104'). If present, interpret this code to determine its capacitance. Explain the calculation (e.g., '104' is 10 x 10^4 pF = 100nF). Note that many SMD capacitors are unmarked; if so, state that.
-
-    Present the final analysis clearly, stating the determined type (THT or SMD) and its specifications.
+    You are an expert electronics technician providing a quick summary for a colleague.
+    Analyze the capacitor in the image. Identify its type (e.g., Ceramic, Electrolytic), form (THT/SMD), capacitance, voltage rating etc.
+    
+    Provide ONLY these key specifications in a Markdown bulleted list with a single sentence mentioning the type of component. Do not add extra paragraphs about case style, applications, or polarity unless it's a direct marking.
     """
     return _invoke_vision_model(prompt, base64_image)
 
 def analyze_ic(image_path):
-    """
-    TOOL 4: Analyzes an Integrated Circuit (IC) to find its model number.
-    """
+    """Analyzes an IC and returns a structured JSON object."""
     base64_image = _image_to_base64(image_path)
-    prompt = "This is an Integrated Circuit (IC). Read all the text printed on its surface. Identify the primary model number, any secondary numbers (like date codes or batch numbers), and the manufacturer if possible."
+    prompt = """
+    You are an expert electronics technician providing a quick summary for a colleague.
+    Analyze the Integrated Circuit (IC). Identify the primary part number and the manufacturer and other specs based on the image.
+    
+    Provide these key details in a Markdown bulleted list along with a single sentence mentioning the type of component.
+    keep your response concise and focused on the IC's key specifications and short as possible.
+    """
     return _invoke_vision_model(prompt, base64_image)
 
 def analyze_generic_component(image_path):
-    """
-    TOOL 5: A fallback for other components like diodes, transistors, etc.
-    """
+    """Analyzes a generic component and returns a structured JSON object."""
     base64_image = _image_to_base64(image_path)
-    prompt = "Describe this electronic component, noting if it appears to be THT or SMD. Identify any markings, part numbers, or symbols on it and explain what they likely mean. For diodes, identify the cathode band. For transistors, identify any part numbers."
+    prompt = """
+    You are an expert electronics technician providing a quick summary for a colleague.
+    Identify the component's most likely type (e.g., Diode, Transistor) and list its key markings or part numbers.
+    
+    Be brief and use a Markdown bulleted list.
+    """
     return _invoke_vision_model(prompt, base64_image)
 
 
 
-# --- 4. Extended chat on component ---
+# --- 5. Chat Continuation Tool ---
 
 def continue_chat(chat_history: list):
     """
     TOOL 6: Takes the existing chat history and generates the next AI response.
     """
-    if not llm:
+    if not chat_llm:
         return "Error: Chat model is not available."
     
     # The first message from the AI is the initial, detailed analysis.
@@ -141,9 +168,8 @@ def continue_chat(chat_history: list):
             messages.append(AIMessage(content=content))
 
     # Invoke the model with the full conversation history
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
     try:
-        response = llm.invoke(messages)
+        response = chat_llm.invoke(messages)
         return response.content
     except Exception as e:
         print(f"An error occurred during chat: {e}")

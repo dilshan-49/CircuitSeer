@@ -17,66 +17,72 @@
 </head>
 <body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
 
-    <div class="w-full max-w-4xl mx-auto bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
-        <div id="main-header" class="p-6 border-b border-gray-700">
+    <div class="w-full max-w-4xl mx-auto bg-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col" style="height: 85vh;">
+        <div id="main-header" class="p-6 border-b border-gray-700 flex-shrink-0">
             <h1 class="text-3xl font-bold text-center text-gray-100">CircuitSeer</h1>
             <p class="text-center text-gray-400 mt-1">AI Visual Inspection Agent</p>
         </div>
 
-        <!-- STATE 1: Live Camera Feed -->
-        <div id="live-feed-view" class="p-6">
-            <div class="bg-black rounded-lg overflow-hidden shadow-lg">
-                <video id="video-feed" autoplay playsinline class="w-full h-auto"></video>
-            </div>
-            <div class="mt-6 text-center flex flex-col sm:flex-row justify-center items-center gap-4">
-                <button id="capture-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 w-full sm:w-auto">
-                    Capture Image
-                </button>
-                <span class="text-gray-400">or</span>
-                <label for="upload-input" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 cursor-pointer w-full sm:w-auto">
-                    Upload Image
-                </label>
-                <input type="file" id="upload-input" class="hidden" accept="image/png, image/jpeg">
-            </div>
-        </div>
-
-        <!-- STATE 2: Confirmation View -->
-        <div id="confirmation-view" class="p-6 hidden">
-            <div class="bg-black rounded-lg overflow-hidden shadow-lg">
-                <img id="confirmation-image" src="" alt="Captured or uploaded component" class="w-full h-auto rounded-lg">
-            </div>
-            <div class="mt-6 flex justify-center space-x-4">
-                <button id="back-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105">
-                    Back
-                </button>
-                <button id="analyze-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105">
-                    Analyze Image
-                </button>
-            </div>
-        </div>
-
-        <!-- STATE 3: Chat & Analysis View -->
-        <div id="analysis-view" class="hidden">
-            <div class="grid md:grid-cols-2 h-[70vh]">
-                <!-- Left Column: Image -->
-                <div class="p-4 flex flex-col items-center justify-center bg-gray-900">
-                    <h2 class="text-xl font-semibold mb-3 text-gray-300">Your Image</h2>
-                    <img id="analysis-image" src="" alt="Analyzed component" class="w-full max-w-sm h-auto rounded-lg shadow-lg">
+        <div class="flex-grow min-h-0 overflow-y-auto">
+            <!-- STATE 1: Live Camera Feed -->
+            <div id="live-feed-view" class="p-6 h-full">
+                <div class="bg-black rounded-lg overflow-hidden shadow-lg">
+                    <video id="video-feed" autoplay playsinline class="w-full h-auto"></video>
                 </div>
-                <!-- Right Column: Chat -->
-                <div class="p-4 flex flex-col bg-gray-800">
-                    <h2 class="text-xl font-semibold mb-3 text-gray-300">AI Assistant</h2>
-                    <div id="chat-log" class="flex-grow bg-gray-700 p-3 rounded-lg overflow-y-auto flex flex-col space-y-4">
-                        <!-- Chat messages will be appended here -->
+                <div class="mt-6 text-center flex flex-col sm:flex-row justify-center items-center gap-4">
+                    <button id="capture-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 w-full sm:w-auto">
+                        Capture Image
+                    </button>
+                    <span class="text-gray-400">or</span>
+                    <label for="upload-input" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 cursor-pointer w-full sm:w-auto">
+                        Upload Image
+                    </label>
+                    <input type="file" id="upload-input" class="hidden" accept="image/png, image/jpeg">
+                </div>
+            </div>
+
+            <!-- STATE 2: Confirmation View -->
+            <div id="confirmation-view" class="p-6 hidden h-full">
+                <div class="bg-black rounded-lg overflow-hidden shadow-lg">
+                    <img id="confirmation-image" src="" alt="Captured or uploaded component" class="w-full h-auto rounded-lg">
+                </div>
+                <div class="mt-6 flex justify-center space-x-4">
+                    <button id="back-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105">
+                        Back
+                    </button>
+                    <button id="analyze-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105">
+                        Analyze Image
+                    </button>
+                </div>
+            </div>
+
+            <!-- STATE 3: Chat & Analysis View -->
+            <div id="analysis-view" class="hidden h-full flex flex-col">
+                <div class="grid md:grid-cols-2 flex-grow min-h-0">
+                    <!-- Left Column: Image and Start Over Button -->
+                    <div class="flex flex-col bg-gray-900 border-r border-gray-700">
+                        <div class="p-4 flex-grow flex flex-col items-center justify-center min-h-0">
+                            <h2 class="text-xl font-semibold mb-3 text-gray-300 flex-shrink-0">Your Image</h2>
+                            <div class="flex-grow flex items-center justify-center w-full p-2">
+                               <img id="analysis-image" src="" alt="Analyzed component" class="max-w-full max-h-full object-contain rounded-lg shadow-lg">
+                            </div>
+                        </div>
+                        <div class="p-4 text-center border-t border-gray-700 flex-shrink-0">
+                            <button id="start-over-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Analyze New Component</button>
+                        </div>
                     </div>
-                    <form id="chat-form" class="mt-4 flex gap-2">
-                        <input type="text" id="chat-input" class="flex-grow bg-gray-600 border border-gray-500 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ask a follow-up question...">
-                        <button type="submit" id="send-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Send</button>
-                    </form>
+                    <!-- Right Column: Chat -->
+                    <div class="p-4 flex flex-col bg-gray-800">
+                        <h2 class="text-xl font-semibold mb-3 text-gray-300 flex-shrink-0">AI Assistant</h2>
+                        <div id="chat-log" class="flex-grow bg-gray-700 p-3 rounded-lg overflow-y-auto flex flex-col space-y-4">
+                            <!-- Chat messages will be appended here -->
+                        </div>
+                        <form id="chat-form" class="mt-4 flex gap-2 flex-shrink-0">
+                            <input type="text" id="chat-input" class="flex-grow bg-gray-600 border border-gray-500 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ask a follow-up question...">
+                            <button type="submit" id="send-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Send</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-             <div class="p-4 text-center border-t border-gray-700">
-                <button id="start-over-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Analyze New Component</button>
             </div>
         </div>
     </div>
@@ -84,7 +90,6 @@
     <canvas id="captured-canvas" class="hidden"></canvas>
 
     <script>
-        // UI Elements
         const videoFeed = document.getElementById('video-feed');
         const captureBtn = document.getElementById('capture-btn');
         const uploadInput = document.getElementById('upload-input');
@@ -97,15 +102,12 @@
         const chatLog = document.getElementById('chat-log');
         const chatForm = document.getElementById('chat-form');
         const chatInput = document.getElementById('chat-input');
-        
-        // Views
         const liveFeedView = document.getElementById('live-feed-view');
         const confirmationView = document.getElementById('confirmation-view');
         const analysisView = document.getElementById('analysis-view');
-        
         let stream;
         let imageDataURL;
-        let sessionId; // To store the current chat session ID
+        let sessionId;
 
         function showView(viewName) {
             liveFeedView.classList.add('hidden');
@@ -128,16 +130,16 @@
 
         function showConfirmation(dataUrl) {
             imageDataURL = dataUrl;
-            confirmationImage.src = imageDataURL;
+            confirmationImage.src = dataUrl;
             showView('confirmation-view');
         }
         
         function appendMessage(text, sender) {
             const bubble = document.createElement('div');
-            bubble.className = `chat-bubble-${sender} p-3 rounded-lg max-w-xs lg:max-w-md break-words`;
+            bubble.className = `chat-bubble-${sender} p-3 rounded-lg max-w-md break-words whitespace-pre-wrap`;
             bubble.textContent = text;
             chatLog.appendChild(bubble);
-            chatLog.scrollTop = chatLog.scrollHeight; // Auto-scroll to bottom
+            chatLog.scrollTop = chatLog.scrollHeight;
         }
 
         captureBtn.addEventListener('click', () => {
@@ -170,17 +172,24 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ image: imageDataURL.split(',')[1] }),
                 });
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
                 
                 const data = await response.json();
-                sessionId = data.session_id; // IMPORTANT: Store the session ID
-                
-                chatLog.innerHTML = ''; // Clear loader
-                appendMessage(data.analysis, 'ai');
+                chatLog.innerHTML = '';
+
+                if (data.session_id) {
+                    sessionId = data.session_id;
+                    appendMessage(data.analysis, 'ai'); 
+                } else {
+                    appendMessage(data.error || "An unknown error occurred.", 'ai');
+                }
 
             } catch (error) {
                 chatLog.innerHTML = '';
-                appendMessage(`Error: Could not connect to the analysis server. Make sure the Python server is running.\n\nDetails: ${error.message}`, 'ai');
+                appendMessage(`Error: Could not connect to the analysis server. ${error.message}`, 'ai');
             }
         });
 
@@ -194,7 +203,7 @@
             chatInput.disabled = true;
 
             const thinkingBubble = document.createElement('div');
-            thinkingBubble.className = 'chat-bubble-ai p-3 rounded-lg max-w-xs lg:max-w-md';
+            thinkingBubble.className = 'chat-bubble-ai p-3 rounded-lg max-w-md';
             thinkingBubble.innerHTML = '<span class="italic">Thinking...</span>';
             chatLog.appendChild(thinkingBubble);
             chatLog.scrollTop = chatLog.scrollHeight;
@@ -222,7 +231,6 @@
 
         startOverBtn.addEventListener('click', startCamera);
         
-        // Initialize
         startCamera();
     </script>
 </body>

@@ -25,13 +25,13 @@
             <p class="text-center text-gray-400 mt-1">AI Visual Inspection Agent</p>
         </div>
 
-        <div class="flex-grow min-h-0 overflow-y-auto">
+        <div class="flex-grow min-h-0">
             <!-- STATE 1: Live Camera Feed -->
-            <div id="live-feed-view" class="p-6 h-full">
-                <div class="bg-black rounded-lg overflow-hidden shadow-lg">
-                    <video id="video-feed" autoplay playsinline class="w-full h-auto"></video>
+            <div id="live-feed-view" class="p-6 h-full flex flex-col">
+                <div class="bg-black rounded-lg overflow-hidden shadow-lg flex-grow min-h-0 flex items-center justify-center">
+                    <video id="video-feed" autoplay playsinline class="max-w-full max-h-full object-contain"></video>
                 </div>
-                <div class="mt-6 text-center flex flex-col sm:flex-row justify-center items-center gap-4">
+                <div class="mt-6 text-center flex-shrink-0 flex flex-col sm:flex-row justify-center items-center gap-4">
                     <button id="capture-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105 w-full sm:w-auto">
                         Capture Image
                     </button>
@@ -44,11 +44,11 @@
             </div>
 
             <!-- STATE 2: Confirmation View -->
-            <div id="confirmation-view" class="p-6 hidden h-full">
-                <div class="bg-black rounded-lg overflow-hidden shadow-lg">
-                    <img id="confirmation-image" src="" alt="Captured or uploaded component" class="w-full h-auto rounded-lg">
+            <div id="confirmation-view" class="p-6 hidden h-full flex flex-col">
+                <div class="bg-black rounded-lg overflow-hidden shadow-lg flex-grow min-h-0 flex items-center justify-center">
+                    <img id="confirmation-image" src="" alt="Captured or uploaded component" class="max-w-full max-h-full object-contain rounded-lg">
                 </div>
-                <div class="mt-6 flex justify-center space-x-4">
+                <div class="mt-6 flex-shrink-0 flex justify-center space-x-4">
                     <button id="back-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105">
                         Back
                     </button>
@@ -74,7 +74,7 @@
                         </div>
                     </div>
                     <!-- Right Column: Chat -->
-                    <div class="p-4 flex flex-col bg-gray-800">
+                    <div class="p-4 flex flex-col bg-gray-800 min-h-0">
                         <h2 class="text-xl font-semibold mb-3 text-gray-300 flex-shrink-0">AI Assistant</h2>
                         <div id="chat-log" class="flex-grow bg-gray-700 p-3 rounded-lg overflow-y-auto flex flex-col space-y-4">
                             <!-- Chat messages will be appended here -->

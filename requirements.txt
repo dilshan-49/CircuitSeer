@@ -6,3 +6,5 @@ google-generativeai
 opencv-python
 python-dotenv
 pillow
+platformdirs
+pywebview

@@ -25,9 +25,9 @@
             <p class="text-center text-gray-400 mt-1">AI Visual Inspection Agent</p>
         </div>
 
-        <div class="flex-grow min-h-0 overflow-y-auto">
+        <div class="flex-grow min-h-0">
             <!-- STATE 1: Live Camera Feed -->
-            <div id="live-feed-view" class="p-6 h-full">
+            <div id="live-feed-view" class="p-6 h-full overflow-y-auto">
                 <div class="bg-black rounded-lg overflow-hidden shadow-lg">
                     <video id="video-feed" autoplay playsinline class="w-full h-auto"></video>
                 </div>
@@ -44,7 +44,7 @@
             </div>
 
             <!-- STATE 2: Confirmation View -->
-            <div id="confirmation-view" class="p-6 hidden h-full">
+            <div id="confirmation-view" class="p-6 hidden h-full overflow-y-auto">
                 <div class="bg-black rounded-lg overflow-hidden shadow-lg">
                     <img id="confirmation-image" src="" alt="Captured or uploaded component" class="w-full h-auto rounded-lg">
                 </div>
@@ -74,7 +74,7 @@
                         </div>
                     </div>
                     <!-- Right Column: Chat -->
-                    <div class="p-4 flex flex-col bg-gray-800">
+                    <div class="p-4 flex flex-col bg-gray-800 min-h-0">
                         <h2 class="text-xl font-semibold mb-3 text-gray-300 flex-shrink-0">AI Assistant</h2>
                         <div id="chat-log" class="flex-grow bg-gray-700 p-3 rounded-lg overflow-y-auto flex flex-col space-y-4">
                             <!-- Chat messages will be appended here -->

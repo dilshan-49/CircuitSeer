@@ -20,9 +20,15 @@
 <body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
 
     <div class="w-full max-w-4xl mx-auto bg-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col" style="height: 85vh;">
-        <div id="main-header" class="p-6 border-b border-gray-700 flex-shrink-0">
-            <h1 class="text-3xl font-bold text-center text-gray-100">CircuitSeer</h1>
-            <p class="text-center text-gray-400 mt-1">AI Visual Inspection Agent</p>
+        <div id="main-header" class="p-6 border-b border-gray-700 flex-shrink-0 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-100">CircuitSeer</h1>
+                <p class="text-gray-400 mt-1">AI Visual Inspection Agent</p>
+            </div>
+            <!-- Power Off Button -->
+            <button id="shutdown-btn" title="Exit Application" class="bg-red-600 hover:bg-red-700 text-white font-bold p-3 rounded-full transition-transform transform hover:scale-110">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+            </button>
         </div>
 
         <div class="flex-grow min-h-0">
@@ -108,6 +114,7 @@
         const confirmationView = document.getElementById('confirmation-view');
         const analysisView = document.getElementById('analysis-view');
         const converter = new showdown.Converter();
+        const shutdownBtn = document.getElementById('shutdown-btn');
 
         let stream;
         let imageDataURL;
@@ -202,6 +209,19 @@
             } catch (error) {
                 chatLog.innerHTML = '';
                 appendMessage(`Error: Could not connect to the analysis server. ${error.message}`, 'ai');
+            }
+        });
+
+                shutdownBtn.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to exit CircuitSeer?")) {
+                try {
+                    // Send a request to the backend to shut down the server
+                    await fetch('/shutdown', { method: 'POST' });
+                } catch (error) {
+                    // This error is expected as the server will shut down before responding
+                    console.log("Shutdown signal sent.");
+                }
+                // The python 'pywebview' wrapper will close the window
             }
         });
 

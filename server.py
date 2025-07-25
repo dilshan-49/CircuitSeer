@@ -1,24 +1,30 @@
 import os
 import base64
 import uuid
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask import Flask, request, jsonify, render_template, send_from_directory
 import traceback
 
 from agent.graph import create_graph
 
-app = Flask(__name__)
-CORS(app)
-sessions = {}
+app = Flask(__name__, static_folder='static', template_folder='templates')
 
 # Initialize the agent once on startup
+sessions = {}
 langgraph_app = None
+
 try:
     langgraph_app = create_graph()
 except Exception as e:
     print(f"FATAL: Could not create LangGraph agent on startup. Error: {e}")
     traceback.print_exc()
 
+# --- Route to serve the main UI ---
+@app.route('/')
+def index():
+    """Serves the main index.html file."""
+    return render_template('index.html')
+
+# --- API Endpoints ---
 @app.route('/analyze', methods=['POST'])
 def analyze_image_endpoint():
     if not langgraph_app:
@@ -77,5 +83,14 @@ def chat_endpoint():
     sessions[session_id].append(("ai", ai_response))
     return jsonify({"response": ai_response})
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+@app.route('/shutdown', methods=['POST'])
+def shutdown():
+    """Endpoint to shut down the server."""
+    print("Shutdown request received. Terminating server.")
+    # This is a bit of a trick to shut down a Flask server from a request
+    shutdown_func = request.environ.get('werkzeug.server.shutdown')
+    if shutdown_func is None:
+        # For non-Werkzeug servers, we might need a more forceful exit
+        os._exit(0)
+    shutdown_func()
+    return "Server is shutting down..."

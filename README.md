@@ -10,13 +10,13 @@ This project leverages a sophisticated hybrid AI model approach and the LangGrap
 
 ## ✨ Features
 
--   **Standalone Desktop Application**: Runs in its own native window without needing a web browser, providing a professional, focused experience.
--   **Hybrid AI Backend**: Utilizes Google Gemini for robust, state-of-the-art vision analysis and a fast DigitalOcean model (e.g., Claude 3.7 Sonnet) for responsive, high-quality conversational chat.
--   **Component Identification**: Automatically identifies the type of component (Resistor, Capacitor, IC, etc.).
--   **Detailed THT & SMD Analysis**: Intelligently handles both Through-Hole and Surface-Mount components with detailed, formatted output.
--   **Conversational Follow-up**: Engage in a chat with the AI assistant to ask further questions about the analyzed component (e.g., "What are its common uses?", "Suggest an alternative.").
--   **Dual Input Methods**: Analyze components using a live webcam feed or by uploading an existing image file.
--   **Clean Shutdown**: A dedicated power button in the UI cleanly terminates both the frontend window and the backend server.
+- **Standalone Desktop Application**: Runs in its own native window without needing a web browser, providing a professional, focused experience.
+- **Hybrid AI Backend**: Utilizes Google Gemini for robust, state-of-the-art vision analysis and a fast DigitalOcean model (e.g., Claude 3.7 Sonnet) for responsive, high-quality conversational chat.
+- **Component Identification**: Automatically identifies the type of component (Resistor, Capacitor, IC, etc.).
+- **Detailed THT & SMD Analysis**: Intelligently handles both Through-Hole and Surface-Mount components with detailed, formatted output.
+- **Conversational Follow-up**: Engage in a chat with the AI assistant to ask further questions about the analyzed component (e.g., "What are its common uses?", "Suggest an alternative.").
+- **Dual Input Methods**: Analyze components using a live webcam feed or by uploading an existing image file.
+- **Clean Shutdown**: A dedicated power button in the UI cleanly terminates both the frontend window and the backend server.
 
 ---
 
@@ -24,27 +24,27 @@ This project leverages a sophisticated hybrid AI model approach and the LangGrap
 
 CircuitSeer is a unified desktop application built on a client-server architecture, wrapped in a native window.
 
-1.  **Application Wrapper (`app.py`)**: The main entry point. It uses `pywebview` to create a native desktop window. It also starts the Flask backend server in a separate, background thread.
-2.  **Frontend (`templates/index.html`)**: A single-page web application that runs inside the `pywebview` window. It handles the camera feed, image uploads, and all user interactions, communicating with the backend via local HTTP requests.
-3.  **Backend (`server.py`)**: A Flask web server that provides API endpoints (`/analyze`, `/chat`, `/shutdown`). It receives requests from the frontend and manages the AI agent's sessions.
-4.  **AI Agent (`agent/graph.py`)**: The Flask server invokes a LangGraph agent for each new analysis. The agent follows a defined workflow:
-    -   **Identification Node**: First, it uses the Gemini vision model to identify the component type.
-    -   **Analysis Node**: Based on the type, a router directs the agent to use a specialized analysis tool.
-5.  **AI Tools (`agent/tools.py`)**: These are the functions that interact with the AI models:
-    -   **Vision Tools**: Send the image and a detailed prompt to the **Google Gemini** API to get a comprehensive analysis.
-    -   **Chat Tool**: Sends the conversation history and a new user query to the **DigitalOcean** chat model API to get a context-aware response.
+1. **Application Wrapper (`app.py`)**: The main entry point. It uses `pywebview` to create a native desktop window. It also starts the Flask backend server in a separate, background thread.
+2. **Frontend (`templates/index.html`)**: A single-page web application that runs inside the `pywebview` window. It handles the camera feed, image uploads, and all user interactions, communicating with the backend via local HTTP requests.
+3. **Backend (`server.py`)**: A Flask web server that provides API endpoints (`/analyze`, `/chat`, `/shutdown`). It receives requests from the frontend and manages the AI agent's sessions.
+4. **AI Agent (`agent/graph.py`)**: The Flask server invokes a LangGraph agent for each new analysis. The agent follows a defined workflow:
+    - **Identification Node**: First, it uses the Gemini vision model to identify the component type.
+    - **Analysis Node**: Based on the type, a router directs the agent to use a specialized analysis tool.
+5. **AI Tools (`agent/tools.py`)**: These are the functions that interact with the AI models:
+    - **Vision Tools**: Send the image and a detailed prompt to the **Google Gemini** API to get a comprehensive analysis.
+    - **Chat Tool**: Sends the conversation history and a new user query to the **DigitalOcean** chat model API to get a context-aware response.
 
 ---
 
 ## 🚀 Technology Stack
 
--   **Application Wrapper**: `pywebview`
--   **Backend**: Python, Flask, LangChain, LangGraph
--   **AI Models**:
-    -   **Vision**: Google Gemini 1.5 Flash (via `langchain-google-genai`)
-    -   **Chat**: DigitalOcean Serverless Inference (e.g., `anthropic-claude-3.7-sonnet` via `langchain-openai`)
--   **Frontend**: HTML, Tailwind CSS, JavaScript, Showdown.js (for Markdown rendering)
--   **Core Libraries**: `opencv-python`, `python-dotenv`
+- **Application Wrapper**: `pywebview`
+- **Backend**: Python, Flask, LangChain, LangGraph
+- **AI Models**:
+  - **Vision**: Google Gemini 1.5 Flash (via `langchain-google-genai`)
+  - **Chat**: DigitalOcean Serverless Inference (e.g., `anthropic-claude-3.7-sonnet` via `langchain-openai`)
+- **Frontend**: HTML, Tailwind CSS, JavaScript, Showdown.js (for Markdown rendering)
+- **Core Libraries**: `opencv-python`, `python-dotenv`
 
 ---
 
@@ -76,10 +76,10 @@ CircuitSeer/
 
 ### Prerequisites
 
--   Python 3.8+
--   A webcam (for live capture)
--   A Google API Key with the Gemini API enabled.
--   A DigitalOcean Model Access Key and API Base URL.
+- Python 3.8+
+- A webcam (for live capture)
+- A Google API Key with the Gemini API enabled.
+- A DigitalOcean Model Access Key and API Base URL.
 
 ### 1. Clone the Repository
 
@@ -136,8 +136,8 @@ A native desktop window for CircuitSeer will open.
 
 ## 📖 Usage
 
-1.  **Capture or Upload**: Use the live camera feed and the **"Capture Image"** button, or click **"Upload Image"** to select a file from your computer.
-2.  **Confirm**: Review the captured image and click **"Analyze Image"**.
-3.  **Analyze**: The initial analysis from the AI will appear in the chat window on the right.
-4.  **Chat**: Use the input box at the bottom of the chat window to ask follow-up questions.
-5.  **Exit**: Click the red power icon in the top-right corner to cleanly shut down the application.
+1. **Capture or Upload**: Use the live camera feed and the **"Capture Image"** button, or click **"Upload Image"** to select a file from your computer.
+2. **Confirm**: Review the captured image and click **"Analyze Image"**.
+3. **Analyze**: The initial analysis from the AI will appear in the chat window on the right.
+4. **Chat**: Use the input box at the bottom of the chat window to ask follow-up questions.
+5. **Exit**: Click the red power icon in the top-right corner to cleanly shut down the application.

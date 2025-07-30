@@ -7,9 +7,7 @@ from langgraph.graph import StateGraph, END
 from agent import tools
 
 # --- 1. Define the State of the Graph ---
-# The state is the memory of your agent. It's a dictionary that gets passed
-# between nodes, and each node can read from or write to it.
-
+# The state is the memory of your agent.
 class AgentState(TypedDict):
     image_path: str  # The path to the image being analyzed
     component_type: str  # The identified type of the component (e.g., 'Resistor')
@@ -36,7 +34,7 @@ def identification_node(state: AgentState):
 
 def analysis_node(state: AgentState):
     """
-    Second node: Takes the component type and calls the correct specialist tool.
+    Second node: Takes the component type and calls the vision model again to get more information.
     """
     print("---NODE: ANALYZING COMPONENT---")
     image_path = state.get("image_path")

@@ -69,12 +69,11 @@ def _invoke_vision_model(prompt, base64_image):
         response = vlm.invoke([message])
         
         # --- DEBUGGING: Print the raw response from the API ---
-        print(f"--- RAW API RESPONSE ---")
-        print(f"Type: {type(response)}")
-        print(f"Response Object: {response}")
-        print(f"------------------------")
+        # print(f"--- RAW API RESPONSE ---")
+        # print(f"Type: {type(response)}")
+        # print(f"Response Object: {response}")
+        # print(f"------------------------")
         
-        # If it's a normal string, return it directly
         return response.content
 
     except Exception as e:
@@ -82,7 +81,7 @@ def _invoke_vision_model(prompt, base64_image):
         return f"API_ERROR: An error occurred while contacting the vision model. Details: {e}"
 
 
-# --- 4. Specialist Analysis Tools (Updated to return JSON) ---
+# --- 4. Image Analysis Tools  ---
 
 def identify_component(image_path):
     """Identifies the general component type (returns a simple string)."""
@@ -128,7 +127,7 @@ def analyze_generic_component(image_path):
     return _invoke_vision_model(prompt, base64_image)
 
 
-# --- 4. NEW Summarization and Chat Tools ---
+# --- 4.RAW response Summarization Tool ---
 def summarize_analysis(analysis_text: str):
     """Takes a long analysis and creates a concise, formatted summary using the chat model."""
     if not chat_llm: return "Error: Chat model is not available for summarization."

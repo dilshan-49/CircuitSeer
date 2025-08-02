@@ -11,7 +11,7 @@ class Camera:
     def __init__(self):
         self.picam2 = Picamera2()
         # Configure the camera for video streaming
-        config = self.picam2.create_preview_configuration(main={"size": (640, 480),"format": "BGR888"})
+        config = self.picam2.create_preview_configuration(main={"size": (640, 480),"format": "RGB888"})
         self.picam2.configure(config)
         
         self.picam2.start()

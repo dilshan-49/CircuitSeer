@@ -88,22 +88,76 @@ git clone https://github.com/dilshan-49/CircuitSeer.git
 cd CircuitSeer
 ```
 
-### 2. Set Up Python Environment & Install Dependencies
+Create a file named `.env` in the root of the project folder and add your API keys:
 
-It's highly recommended to use a virtual environment.
+```env
+# --- Google Credentials (for Vision) ---
 
+GOOGLE_API_KEY="your_google_api_key_here"
+
+
+# --- DigitalOcean Credentials (for Chat) ---
+
+DO_API_BASE="[https://inference.do-ai.run/v1](https://inference.do-ai.run/v1)"
+
+DO_API_KEY="your_digitalocean_api_key"
+
+DO_CHAT_MODEL="openai-gpt-4o-mini"
+```
+
+---
+
+### 2. Setup for Raspberry Pi
+
+This setup uses the Raspberry Pi's CSI camera module.
+
+**A. System Dependencies:**
+First, enable the camera in `sudo raspi-config` and install the necessary system libraries:
 ```bash
-# Create a virtual environment
-python -m venv venv
+sudo apt update
+sudo apt install -y python3-picamera2 python3-pyqt5 libgtk-3-dev libwebkit2gtk-4.0-dev libxcb-xinerama0
+```
+
+**B. Python Environment:**
+Create a virtual environment that can access the system's `picamera2` library.
+```bash
+# Create a virtual environment with access to system packages
+python3 -m venv venv --system-site-packages
 
 # Activate it
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
 source venv/bin/activate
 
-# Install all required packages
+# Install dependencies from requirements.txt
 pip install -r requirements.txt
+
+# Fix potential NumPy incompatibility
+pip install --force-reinstall --no-cache-dir numpy
+```
+**To Run:**
+```bash
+python app_pi.py
+```
+
+---
+
+### 3. Setup for Desktop (Windows / macOS / Linux)
+
+This setup uses your computer's built-in webcam.
+
+```bash
+# Create a standard virtual environment
+python3 -m venv venv
+
+# Activate it
+# On Windows: venv\Scripts\activate
+# On macOS/Linux: source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+**To Run:**
+```bash
+python app.py
 ```
 
 ### 3. Configure API Keys

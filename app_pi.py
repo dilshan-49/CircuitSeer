@@ -1,8 +1,12 @@
-import webview
 import threading
 import sys
 import server_pi # Import the Pi-specific server
 from utils.camera_pi import Camera # Import the Pi-specific camera class
+import os
+
+os.environ["WEBKIT_DISABLE_COMPOSITING_MODE"] = "1"
+
+import webview
 
 pi_camera = None
 
